@@ -4,9 +4,7 @@ from core.database import get_db
 from core.init import *
 from schemas.petHost import *
 
-
 router = APIRouter(prefix="")
-
 
 @router.get("/")
 def home():
