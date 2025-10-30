@@ -1,17 +1,17 @@
 [project]
-name = "demo"
+name = "petbnb-api"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "authlib>=1.6.5",
+    "alembic>=1.17.0",
+    "email-validator>=2.3.0",
     "fastapi>=0.120.0",
     "passlib[bcrypt]>=1.7.4",
-    "psycopg2>=2.9.11",
-    "pydantic[email]>=2.12.3",
-    "python-jose[cryptography]>=3.5.0",
-    "pytz>=2025.2",
+    "pydantic>=2.12.3",
+    "python-dotenv>=1.2.1",
+    "python-multipart>=0.0.20",
     "sqlalchemy>=2.0.44",
     "uvicorn>=0.38.0",
 ]

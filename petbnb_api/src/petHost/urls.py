@@ -6,6 +6,12 @@ from schemas.petHost import *
 
 router = APIRouter(prefix="")
 
+@router.get("/filter")
+def filterHost(db: Session = Depends(get_db)):
+    hosts = db.query(PetHost).all()
+    db.close()
+    return hosts
+
 @router.get("/")
 def home():
     return {

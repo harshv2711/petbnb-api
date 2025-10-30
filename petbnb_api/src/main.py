@@ -1,13 +1,12 @@
-from fastapi import (FastAPI, Depends, HTTPException)
-from sqlalchemy.orm import Session
-from schemas.petHost import PetHostSchema, PetPreferencesSchema, ServiceOfferSchema
+from fastapi import (FastAPI)
 from core.init import *
 from core.database import *
 Base.metadata.create_all(bind=engine)
-from petHost.urls import router as pet_host_router
-
+from routers import petHostRouter, bookingRouter
 app = FastAPI()
-app.include_router(pet_host_router)
+
+app.include_router(petHostRouter) # petHost app urls
+app.include_router(bookingRouter) # booking app urls
 
 @app.get("/")
 def home():

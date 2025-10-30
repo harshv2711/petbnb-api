@@ -1,3 +1,4 @@
-from petHost.urls import router as pet_host_router
+from petHost.urls import router as petHostRouter
+from booking.urls import router as bookingRouter
 
-__all__ = ["pet_host_router"]
+__all__ = ["petHostRouter", "bookingRouter"]
