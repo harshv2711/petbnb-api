@@ -1,15 +1,30 @@
-from pydantic import BaseModel
-from imageGallery.models import ImageGallery
-from service.models import ServiceOffer
+from pydantic import BaseModel, EmailStr, ConfigDict
+from enum import Enum
 
-class hostProfileSchema(BaseModel):
-    id: int
-    image_gallery: ImageGallery
-    profile_image: str
-    first_name: bool
-    last_name: bool
-    service_offers: ServiceOffer
-    rating: int
-    address: str
-    account_status: str
-    is_verified: bool
+class PetTypeEnum(str, Enum):
+    DOG = "Dog"
+    CAT = "Cat"
+    BOTH = "Both"
+
+
+class AgeRangeEnum(str, Enum):
+    PUPPY = "Puppy"
+    ADULT = "Adult"
+    SENIOR = "Senior"
+
+
+class PetSizeAcceptedEnum(str, Enum):
+    SMALL = "Small"
+    MEDIUM = "Medium"
+    LARGE = "Large"
+
+
+class CreateHostAccountInputSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: str
+    first_name: str
+    last_name: str
+    email: EmailStr
+
+

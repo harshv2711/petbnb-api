@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from core.init import *
 from schemas.petHost import *
+from .schemas import CreateHostAccountInputSchema
+from .models import PetHost
 
 router = APIRouter(prefix="")
 
@@ -25,9 +27,41 @@ def petHost(db: Session = Depends(get_db)):
     return hosts
 
 @router.post("/pet-host")
-def createPetHost(pethost:PetHostSchema):
-    print(pethost)
-    return pethost
+def createPetHost(hostData:CreateHostAccountInputSchema,  db: Session = Depends(get_db)):
+
+    # 1. Check if a host already exists by user_id or email
+    existing_host = db.query(PetHost).filter(
+        (PetHost.user_id == hostData.user_id) | 
+        (PetHost.email == hostData.email)
+    ).first()
+
+    if existing_host:
+        # ✅ Return an API error response
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": True,
+                "message": "Host account already exists for this user.",
+                # "existing_host_id": existing_host.id,
+                # "email": existing_host.email
+            }
+        )
+
+    #  2. Create a new host record if not found
+    new_host = PetHost(
+        user_id=hostData.user_id,
+        first_name=hostData.first_name,
+        last_name=hostData.last_name,
+        email=hostData.email,
+        mobile_number=hostData.mobile_number,
+    )
+
+    db.add(new_host)
+    db.commit()
+    db.refresh(new_host)
+
+    return new_host
+
 
 @router.get("/pet-host/pet-preference/{petHostId}")
 def getPetPreferenceForPetHost(
