@@ -54,6 +54,7 @@ def setPetPreference(
     db.refresh(newPreference)
 
     return {
+        "error": False,
         "message": "Pet preferences created successfully",
         "data": newPreference
     }
