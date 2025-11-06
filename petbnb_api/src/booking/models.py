@@ -1,54 +1,61 @@
-# database.py
-from sqlalchemy import (
-    Column, Integer, Float, Boolean, String,
-    DateTime, func, ForeignKey
-)
-from sqlalchemy.orm import relationship
-from core.database import Base
-from pydantic import BaseModel, HttpUrl
-from enum import Enum
-from utils import PricingBasisEnum, PetTypeEnum, PetGenderEnum
-from typing import Optional
+from pydantic import BaseModel
+import enum
+
+class BookingStatusEnum(str, enum.Enum):
+    waiting = "waiting"
+    confirmed = "confirmed"
+    completed = "completed"
+    cancelled = "cancelled"
+    ongoing = "ongoing"
 
 
-class ServiceOfferSchema(BaseModel):
-    # id: int
-    pet_host_id: int
-    service_name: str
-    service_description: str
-    service_price: float
-    pricing_basis: PricingBasisEnum
+class CancelledByEnum(str, enum.Enum):
+    pet_host = "petHost"                  # Host cancelled (e.g., unavailable or emergency)
+    pet_owner = "petOwner"                # Owner cancelled (e.g., travel plan changed)
+    platform = "platform"                 # Admin manually cancelled
+    system_auto = "systemAuto"            # Auto-cancel due to timeout or no response
+    payment_failure = "paymentFailure"    # Cancelled automatically because payment failed
+    policy_violation = "policyViolation"  # Cancelled due to fraud, T&C breach, or misconduct
+    duplicate_booking = "duplicateBooking" # Cancelled because duplicate was detected
+    weather_issue = "weatherIssue"        # Cancelled due to severe weather/natural causes
+    other = "other"                       # Fallback for uncategorized reasons
 
-    class Config:
-        orm_mode = True
+class PaymentStatusEnum(str, enum.Enum):
+    unpaid = "unpaid"                 # Booking created, payment not yet made
+    pending = "pending"               # Payment initiated but not confirmed
+    paid = "paid"                     # Successfully paid and confirmed
+    refunded = "refunded"             # Fully refunded
+    partially_refunded = "partiallyRefunded"  # Partial refund issued
+    failed = "failed"                 # Payment attempt failed
+    disputed = "disputed"             # Payment under dispute or chargeback
+    expired = "expired" 
+
+
+class HostService:
+    pass              # Payment link expired or timed out
+
+class PetProfile:
+    pass
+
+class HostServiceBooking(BaseModel):
+    id: int
+    bookingUUID: str
+    serviceName: str
+    serviceAmt: float
+    amt_basis: str
 
 class Booking(BaseModel):
-    id: int # primary key
-    bookingNumber: int # like OrderId
-    userId: int # pet owner 
-    petHostId: int # Booked this host
-    # for service 
-    service_name: str # boarding, walking or training
-    service_price: float # 999.0
-    pricing_basis: PricingBasisEnum
-    checkInAt: DateTime
-    checkOutInAt: DateTime
-    totalAmt: float # 1245 add platform fee and GST
-    
-    # for pet profile
-
-class PetProfiel:
     id: int
-    petProfileImageUrl: Optional[HttpUrl] = None
-    petName: str # buro -  Dog male golden retriver 5 Years 25kg Vaccinated
-    petType: PetTypeEnum
-    gender: PetGenderEnum
-    breed: str
-    age: str
-    weightKg: str
-    isVaccinated: bool
-    isFriendlyWithChildren: bool
+    bookingUUID: str #random UUID same as Order to track Booking
+    userID: str # person who booked a particular host
+    bookedPetHost: int # pet Host Id
+    bookedForService: list[HostServiceBooking]
+    bookedForPetProfiles: list[PetProfile]
+
+    bookingStatus: BookingStatusEnum 
+    paymentStatus: PaymentStatusEnum
+    cancelledBy: CancelledByEnum
+    isCanceled: bool = False
 
 
 
-    
