@@ -1,5 +1,8 @@
 from pydantic import BaseModel
 import enum
+from core.database import Base
+from sqlalchemy import (Column, String, Integer, Float, Boolean, DateTime, func)
+from core.init import PetHost, PetProfile, ServiceOffer
 
 class BookingStatusEnum(str, enum.Enum):
     waiting = "waiting"
@@ -44,7 +47,7 @@ class HostServiceBooking(BaseModel):
     serviceAmt: float
     amt_basis: str
 
-class Booking(BaseModel):
+class BookingSchema(BaseModel):
     id: int
     bookingUUID: str #random UUID same as Order to track Booking
     userID: str # person who booked a particular host
@@ -58,4 +61,28 @@ class Booking(BaseModel):
     isCanceled: bool = False
 
 
+class Booking(Base):
+    bookingUUID = Column(Integer, primary_key=True, nullable=False, unique=True)
+    user_id = Column(String, nullable=False)
+    bookedPetHost = Column(PetHost)
+    bookedForService = "" # one to many relattionship with BookingService table
+    bookedForPet = "" # one to many relattionship with BookingPetProfile table
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+class BookingService(Base):
+    id = Column(Integer, primary_key=True, index=True)
+    booking_uuid = Column(Booking) # foreign key
+    service_name = Column(String, nullable=False) # example Boarding
+    service_amt = Column(float, nullable=False) #
+    amt_basis = Column(String, nullable=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+class BookingPetProfile(BaseModel):
+    id = Column(Integer, primary_key=True, index=True)
+    pet_profile = " " #pet profile id 
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()), 
