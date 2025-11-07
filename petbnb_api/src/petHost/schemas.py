@@ -26,5 +26,6 @@ class CreateHostAccountInputSchema(BaseModel):
     first_name: str
     last_name: str
     email: EmailStr
+    mobile_number: str
 
 

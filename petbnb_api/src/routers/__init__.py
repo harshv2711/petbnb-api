@@ -4,6 +4,7 @@ from petPreference.urls import router as petPreferenceRouter
 from service.urls import router as petServiceRouter
 from imageGallery.urls import router as petHostImageGalleryRouter
 from petProfile.urls import router as petProfileRouter
+from booking.urls import router as bookingRouter
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     "petServiceRouter",
     "petHostImageGalleryRouter",
     "petProfileRouter",
+    "bookingRouter"
 ]

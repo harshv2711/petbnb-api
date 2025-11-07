@@ -33,6 +33,7 @@ class PetHost(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # -------- Relationships (attached collections/objects) --------
+    bookings = relationship("Booking", back_populates="booked_pet_host", cascade="all, delete")
     pet_preferences = relationship(
         "PetPreferences",
         back_populates="pet_host",
