@@ -1,9 +1,15 @@
 from pydantic import BaseModel
 import enum
 from core.database import Base
-from sqlalchemy import (Column, String, Integer, Float, Boolean, DateTime, func)
-from core.init import PetHost, PetProfile, ServiceOffer
+from sqlalchemy import (
+    Column, String, Integer, Float, Boolean, DateTime, ForeignKey, func
+)
+from sqlalchemy.orm import relationship
 
+
+# =========================
+# ENUM CLASSES
+# =========================
 class BookingStatusEnum(str, enum.Enum):
     waiting = "waiting"
     confirmed = "confirmed"
@@ -13,76 +19,102 @@ class BookingStatusEnum(str, enum.Enum):
 
 
 class CancelledByEnum(str, enum.Enum):
-    pet_host = "petHost"                  # Host cancelled (e.g., unavailable or emergency)
-    pet_owner = "petOwner"                # Owner cancelled (e.g., travel plan changed)
-    platform = "platform"                 # Admin manually cancelled
-    system_auto = "systemAuto"            # Auto-cancel due to timeout or no response
-    payment_failure = "paymentFailure"    # Cancelled automatically because payment failed
-    policy_violation = "policyViolation"  # Cancelled due to fraud, T&C breach, or misconduct
-    duplicate_booking = "duplicateBooking" # Cancelled because duplicate was detected
-    weather_issue = "weatherIssue"        # Cancelled due to severe weather/natural causes
-    other = "other"                       # Fallback for uncategorized reasons
+    pet_host = "petHost"
+    pet_owner = "petOwner"
+    platform = "platform"
+    system_auto = "systemAuto"
+    payment_failure = "paymentFailure"
+    policy_violation = "policyViolation"
+    duplicate_booking = "duplicateBooking"
+    weather_issue = "weatherIssue"
+    other = "other"
+
 
 class PaymentStatusEnum(str, enum.Enum):
-    unpaid = "unpaid"                 # Booking created, payment not yet made
-    pending = "pending"               # Payment initiated but not confirmed
-    paid = "paid"                     # Successfully paid and confirmed
-    refunded = "refunded"             # Fully refunded
-    partially_refunded = "partiallyRefunded"  # Partial refund issued
-    failed = "failed"                 # Payment attempt failed
-    disputed = "disputed"             # Payment under dispute or chargeback
-    expired = "expired" 
+    unpaid = "unpaid"
+    pending = "pending"
+    paid = "paid"
+    refunded = "refunded"
+    partially_refunded = "partiallyRefunded"
+    failed = "failed"
+    disputed = "disputed"
+    expired = "expired"
 
 
-class HostService:
-    pass              # Payment link expired or timed out
-
-class PetProfile:
-    pass
-
-class HostServiceBooking(BaseModel):
-    id: int
-    bookingUUID: str
-    serviceName: str
-    serviceAmt: float
-    amt_basis: str
-
-class BookingSchema(BaseModel):
-    id: int
-    bookingUUID: str #random UUID same as Order to track Booking
-    userID: str # person who booked a particular host
-    bookedPetHost: int # pet Host Id
-    bookedForService: list[HostServiceBooking]
-    bookedForPetProfiles: list[PetProfile]
-
-    bookingStatus: BookingStatusEnum 
-    paymentStatus: PaymentStatusEnum
-    cancelledBy: CancelledByEnum
-    isCanceled: bool = False
-
-
+# =========================
+# DATABASE MODELS
+# =========================
 class Booking(Base):
-    bookingUUID = Column(Integer, primary_key=True, nullable=False, unique=True)
+    __tablename__ = "bookings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    booking_uuid = Column(String, unique=True, nullable=False)  # UUID string
     user_id = Column(String, nullable=False)
-    bookedPetHost = Column(PetHost)
-    bookedForService = "" # one to many relattionship with BookingService table
-    bookedForPet = "" # one to many relattionship with BookingPetProfile table
+    booked_pet_host_id = Column(Integer, ForeignKey("pet_hosts.id"), nullable=False)
+
+    booking_status = Column(String, default=BookingStatusEnum.waiting.value)
+    payment_status = Column(String, default=PaymentStatusEnum.unpaid.value)
+    cancelled_by = Column(String, nullable=True)
+    is_canceled = Column(Boolean, default=False)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # Relationships
+    booked_pet_host = relationship("PetHost", back_populates="bookings")
+    services = relationship("BookingService", back_populates="booking", cascade="all, delete")
+    pets = relationship("BookingPetProfile", back_populates="booking", cascade="all, delete")
+
 
 class BookingService(Base):
+    __tablename__ = "booking_services"
+
     id = Column(Integer, primary_key=True, index=True)
-    booking_uuid = Column(Booking) # foreign key
-    service_name = Column(String, nullable=False) # example Boarding
-    service_amt = Column(float, nullable=False) #
-    amt_basis = Column(String, nullable=False)
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
+    service_name = Column(String, nullable=False)  # e.g. Boarding, Grooming
+    service_amt = Column(Float, nullable=False)
+    amt_basis = Column(String, nullable=False)  # e.g. per night, per hour
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
-class BookingPetProfile(BaseModel):
+    booking = relationship("Booking", back_populates="services")
+
+
+class BookingPetProfile(Base):
+    __tablename__ = "booking_pet_profiles"
+
     id = Column(Integer, primary_key=True, index=True)
-    pet_profile = " " #pet profile id 
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
+    pet_profile_id = Column(Integer, ForeignKey("pet_profiles.id"), nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now()), 
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    booking = relationship("Booking", back_populates="pets")
+    pet_profile = relationship("PetProfile")
+
+
+# =========================
+# PYDANTIC SCHEMAS
+# =========================
+class HostServiceBooking(BaseModel):
+    service_name: str
+    service_amt: float
+    amt_basis: str
+
+
+class BookingSchema(BaseModel):
+    booking_uuid: str
+    user_id: str
+    booked_pet_host_id: int
+    booked_for_service: list[HostServiceBooking]
+    booked_for_pet_profiles: list[int]  # list of pet profile IDs
+
+    booking_status: BookingStatusEnum = BookingStatusEnum.waiting
+    payment_status: PaymentStatusEnum = PaymentStatusEnum.unpaid
+    cancelled_by: CancelledByEnum | None = None
+    is_canceled: bool = False
+
+    class Config:
+        orm_mode = True
