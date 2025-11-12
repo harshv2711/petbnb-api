@@ -1,30 +1,51 @@
-from pydantic import BaseModel, EmailStr, ConfigDict
 from enum import Enum
+from typing import Optional
+from pydantic import BaseModel, Field
+
 
 class PetTypeEnum(str, Enum):
-    DOG = "Dog"
-    CAT = "Cat"
-    BOTH = "Both"
+    Dog = "Dog"
+    Cat = "Cat"
+    Both = "Both"
+
+
+class PetSizeEnum(str, Enum):
+    Small = "Small"
+    Medium = "Medium"
+    Large = "Large"
+    All = "All"
+
 
 
 class AgeRangeEnum(str, Enum):
-    PUPPY = "Puppy"
-    ADULT = "Adult"
-    SENIOR = "Senior"
+    Puppy = "Puppy"
+    Adult = "Adult"
+    Senior = "Senior"
+    All = "All"
 
 
-class PetSizeAcceptedEnum(str, Enum):
-    SMALL = "Small"
-    MEDIUM = "Medium"
-    LARGE = "Large"
+# ---------- In / Out Schemas ----------
+
+class PetPreferencesBase(BaseModel):
+    pet_type: Optional[PetTypeEnum] = Field(None, description="Dog, Cat, or Both")
+    pet_size_accepted: Optional[PetSizeEnum] = Field(None, description="Small, Medium, Large, All")
+    age_range: Optional[AgeRangeEnum] = Field(None, description="Puppy, Adult, Senior")
+    special_needs_pet_accepted: Optional[bool] = True
+    medical_needs_pet_accepted: Optional[bool] = True
 
 
-class CreatePetPreferenceInputSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+class PetPreferencesCreate(PetPreferencesBase):
+    pet_host_id: int
 
-    user_id: str
-    pet_type: PetTypeEnum
-    pet_size_accepted: PetSizeAcceptedEnum
-    age_range: AgeRangeEnum
-    special_needs_pet_accepted: bool
-    medical_needs_pet_accepted: bool
+
+class PetPreferencesUpdate(PetPreferencesBase):
+    # All fields optional for PATCH
+    pass
+
+
+class PetPreferencesOut(PetPreferencesBase):
+    id: int
+    pet_host_id: int
+
+    class Config:
+        from_attributes = True  # Pydantic v2 (for SQLAlchemy models)
