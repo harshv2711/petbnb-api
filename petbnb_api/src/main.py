@@ -72,6 +72,8 @@ app.add_middleware(
 # 📂 Static /media
 # -----------------------------
 app.mount("/media", StaticFiles(directory=MEDIA_ROOT), name="media")
+app.mount("/static/pets", StaticFiles(directory="pet_uploads"), name="pet_media")
+
 
 # -----------------------------
 # 🔌 Routers

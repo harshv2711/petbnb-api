@@ -1,3 +1,6 @@
+from datetime import datetime
+from typing import List, Optional
+
 from pydantic import BaseModel
 import enum
 from core.database import Base
@@ -48,9 +51,13 @@ class Booking(Base):
     __tablename__ = "bookings"
 
     id = Column(Integer, primary_key=True, index=True)
-    booking_uuid = Column(String, unique=True, nullable=False)  # UUID string
+    booking_uuid = Column(String, unique=True, nullable=False)
     user_id = Column(String, nullable=False)
-    booked_pet_host_id = Column(Integer, ForeignKey("pet_hosts.id"), nullable=False)
+    booked_pet_host_id = Column(Integer, ForeignKey("pet_hosts.id"), nullable=False)  # <— restored
+
+    # New fields
+    checkin_datetime = Column(DateTime(timezone=True), nullable=False)
+    checkout_datetime = Column(DateTime(timezone=True), nullable=False)
 
     booking_status = Column(String, default=BookingStatusEnum.waiting.value)
     payment_status = Column(String, default=PaymentStatusEnum.unpaid.value)
@@ -85,8 +92,8 @@ class BookingPetProfile(Base):
     __tablename__ = "booking_pet_profiles"
 
     id = Column(Integer, primary_key=True, index=True)
-    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)
-    pet_profile_id = Column(Integer, ForeignKey("pet_profiles.id"), nullable=False)
+    booking_id = Column(Integer, ForeignKey("bookings.id"), nullable=False)       # <— added
+    pet_profile_id = Column(Integer, ForeignKey("pet_profiles.id"), nullable=False)  # <— added
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -108,12 +115,15 @@ class BookingSchema(BaseModel):
     booking_uuid: str
     user_id: str
     booked_pet_host_id: int
-    booked_for_service: list[HostServiceBooking]
-    booked_for_pet_profiles: list[int]  # list of pet profile IDs
+    booked_for_service: List[HostServiceBooking]
+    booked_for_pet_profiles: List[int]
+
+    checkin_datetime: datetime
+    checkout_datetime: datetime
 
     booking_status: BookingStatusEnum = BookingStatusEnum.waiting
     payment_status: PaymentStatusEnum = PaymentStatusEnum.unpaid
-    cancelled_by: CancelledByEnum | None = None
+    cancelled_by: Optional[CancelledByEnum] = None
     is_canceled: bool = False
 
     class Config:

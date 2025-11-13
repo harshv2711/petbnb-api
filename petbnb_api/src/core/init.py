@@ -4,7 +4,7 @@ from petPreference.models import PetPreferences
 from certificate.models import Certification
 from imageGallery.models import ImageGallery
 from reviewsAndRating.models import ReviewsAndRating
-from petProfile.models import PetProfile
+from petProfile.models import PetProfile, PetPhotos
 from booking.models import Booking, BookingService, BookingPetProfile
 
 __all__ = [
@@ -18,4 +18,5 @@ __all__ = [
     "Booking",
     "BookingService",
     "BookingPetProfile",
+    "PetPhotos",
 ]
